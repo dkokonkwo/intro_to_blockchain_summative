@@ -5,7 +5,7 @@ Submission Requirements:
 
 Source Code:
 - Submit the complete C source code files (.c and .h if applicable) with all functions implemented as required.
-- - Ensure the code is well-commented to explain the logic and functionality of each function.
+    - Ensure the code is well-commented to explain the logic and functionality of each function.
 - ReadMe File:
 Instructions on how to compile and run the program.
 A brief description of how the program uses blockchain principles.
