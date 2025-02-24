@@ -13,6 +13,7 @@
 #define BLOCKCHAIN_DATABASE "blockchain.dat"
 #define UTXO_DATABASE "transaction.dat"
 #define USERS_DATABASE "users.dat"
+#define SESSION_USER "current_user.dat"
 #define TRANSACTION_FEE 1
 #define TRANSACTION_VOLUME 5 /* Number of transaction to be mined in a block */
 
@@ -185,7 +186,8 @@ int load_user(const char *name, int idx);
 int create_user(const char *name, int role);
 int serialize_users(lusers *users);
 lusers *deserialize_users(void);
-user_t *check_user(void);
+user_t *get_user(void);
+void free_users(lusers *users);
 
 /* BLOCK FUNCTIONS */
 Block *create_block(int index, utxo_t *transactions, const unsigned char *previous_hash, int difficulty);

@@ -10,7 +10,7 @@ int serialize_blockchain(Blockchain *blockchain)
     FILE *file = fopen(BLOCKCHAIN_DATABASE, "wb");
     if (!file)
     {
-        printf("Failed to open file for serialization\n");
+        fprintf(stderr, "Failed to open file for serialization\n");
         return 0;
     }
 

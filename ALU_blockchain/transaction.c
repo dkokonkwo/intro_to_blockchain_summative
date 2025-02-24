@@ -182,7 +182,12 @@ int verify_transaction(const char *sender, const char *receiver)
         return 0;
     }
     // check to see if sender's address matches current logged in user
-    curr = check_user();
+    curr = get_user();
+    if (!curr || !curr->wallet)
+    {
+        fprintf(stderr, "Sender has no wallet\n");
+        return 0;
+    }
     if (strcmp(curr->wallet->address, sender) !=0)
     {
         fprintf(stderr, "Unverified sender\n");
