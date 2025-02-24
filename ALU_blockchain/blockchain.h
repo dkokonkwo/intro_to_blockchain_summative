@@ -12,7 +12,7 @@
 #define DATASIZE_MAX 1024
 #define BLOCKCHAIN_DATABASE "blockchain.dat"
 #define UTXO_DATABASE "transaction.dat"
-#define USER_DATABASE "users.dat"
+#define USERS_DATABASE "users.dat"
 #define TRANSACTION_FEE 1
 #define TRANSACTION_VOLUME 5 /* Number of transaction to be mined in a block */
 
@@ -31,6 +31,12 @@ typedef enum
     SUCCESS,
     FAILED,
 } Status;
+
+const char* status_str[] = {
+    "INITIATED",
+    "SUCCESS",
+    "FAILED",
+};
 
 /**
  * struct Transaction_s - transaction structure
@@ -122,7 +128,7 @@ typedef struct user_s {
     Role role;
     char name[DATASIZE_MAX];
     int index;
-    Wallet wallet;
+    Wallet *wallet;
     struct user_s *next;
 } user_t;
 
@@ -146,7 +152,7 @@ typedef struct lusers {
 typedef struct alu_account_s
 {
     char name[DATASIZE_MAX];
-    Wallet wallet;
+    Wallet *wallet;
 } alu_account_s;
 
 /**
@@ -165,8 +171,8 @@ typedef struct {
 int serialize_utxo(utxo_t *unspent);
 utxo_t *deserialize_utxo(void);
 int add_transaction(const char *sender, const char *receiver, int amount);
-void freeTransactions(utxo_t *transactions);
-int verify_transaction(Transaction *transaction);
+void free_transactions(utxo_t *transactions);
+int verify_transaction(const char *sender, const char *receiver);
 
 /* WALLET FUNCTIONS */
 int create_wallet(user_t *user); //compute user address(hash) and print it. Add wallet to user structure
@@ -179,10 +185,11 @@ int load_user(const char *name, int idx);
 int create_user(const char *name, int role);
 int serialize_users(lusers *users);
 lusers *deserialize_users(void);
+user_t *check_user(void);
 
 /* BLOCK FUNCTIONS */
-Block create_block(int index, utxo_t *transactions, const unsigned char *previous_hash, int difficulty);
-void add_block(Blockchain *blockchain);
+Block *create_block(int index, utxo_t *transactions, const unsigned char *previous_hash, int difficulty);
+void add_block(Blockchain *blockchain, Block *block);
 
 /* BLOCK MINING FUNCTIONS */
 void mine_block(Block *block, int difficulty);
@@ -198,7 +205,7 @@ Blockchain *init_blockchain(void);
 int validate_chain(Blockchain *blockchain);
 void print_blockchain(Blockchain *blockchain);
 void free_blockchain(Blockchain *blockchain);
-utxo_t *create_gensis_transaction(const char *sender, const char *receiver, int amount); //might not be neccessary
+utxo_t *create_genesis_transaction(const char *sender, const char *receiver, int amount); //might not be neccessary
 int adjustDifficulty(uint64_t prevTime, uint64_t currentTime, int currentDifficulty);
 
 #endif
