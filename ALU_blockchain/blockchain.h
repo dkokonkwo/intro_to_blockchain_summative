@@ -16,6 +16,7 @@
 #define SESSION_USER "current_user.dat"
 #define TRANSACTION_FEE 1
 #define TRANSACTION_VOLUME 5 /* Number of transaction to be mined in a block */
+#define ADDRESS_SIZE SHA256_DIGEST_LENGTH / 2
 
 #define INITIAL_DIFFICULTY 1  /* Starting difficulty level */
 
@@ -81,7 +82,7 @@ typedef struct utxo_s {
  */
 typedef struct Block_s {
     unsigned int index;
-    unsigned previous_hash[SHA256_DIGEST_LENGTH];
+    unsigned char previous_hash[SHA256_DIGEST_LENGTH];
     char timestamp[30];
     unsigned int nonce;
     utxo_t *transactions; // Transactions included in the block.
@@ -111,7 +112,7 @@ typedef struct Blockchain {
  * @nb_trans: number of transactions done with wallet
  */
 typedef struct Wallet {
-    unsigned char address[20];
+    unsigned char address[SHA256_DIGEST_LENGTH];
     int balance;
     utxo_t *transactions;
     int nb_trans;
@@ -177,17 +178,18 @@ int verify_transaction(const char *sender, const char *receiver);
 
 /* WALLET FUNCTIONS */
 int create_wallet(user_t *user); //compute user address(hash) and print it. Add wallet to user structure
-void compute_user_hash(user_t *user, unsigned char *hash);
+void get_address(user_t *user, unsigned char *hash);
 int delete_wallet(user_t *user); //may or may not be a function
-void view_balance(user_t *user); //print out balance in user wallet
+void view_balance(void); //print out balance in user wallet
 
 /* USER FUNCTIONS */
 int load_user(const char *name, int idx);
 int create_user(const char *name, int role);
 int serialize_users(lusers *users);
 lusers *deserialize_users(void);
-user_t *get_user(void);
+user_t *get_user(const char *address);
 void free_users(lusers *users);
+void free_user(user_t *user);
 
 /* BLOCK FUNCTIONS */
 Block *create_block(int index, utxo_t *transactions, const unsigned char *previous_hash, int difficulty);
@@ -198,7 +200,8 @@ void mine_block(Block *block, int difficulty);
 void calculate_hash(Block *block, unsigned int nonce, unsigned char *hash);
 int is_valid_hash(unsigned char *hash, int difficulty);
 void hash_to_hex(unsigned char *hash, char *output);
-void finalise_transaction(utxo_t *transactions); // transaction token are sent and fee is sent to miner, status is updated, remove mined trsanction from unspent
+int finalize_mining(Block *block);
+utxo_t *tx_for_mining(utxo_t *total_unpsent);
 
 /* BLOCKCHAIN FUNCTIONS */
 Blockchain *deserialize_blockchain(void);

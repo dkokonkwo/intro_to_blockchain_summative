@@ -182,7 +182,7 @@ int verify_transaction(const char *sender, const char *receiver)
         return 0;
     }
     // check to see if sender's address matches current logged in user
-    curr = get_user();
+    curr = get_user(NULL);
     if (!curr || !curr->wallet)
     {
         fprintf(stderr, "Sender has no wallet\n");
@@ -201,13 +201,16 @@ int verify_transaction(const char *sender, const char *receiver)
     }
     for (recv = all_users->head; recv; recv = recv->next)
     {
-        if (strcmp(recv->wallet->address, receiver) == 0)
+        if (recv->wallet)
         {
-            printf("Transaction verified\n");
-            return 1;
+            if (strcmp(recv->wallet->address, receiver) == 0)
+            {
+                printf("Transaction verified\n");
+                return 1;
+            }
         }
     }
 
-    fprintf(stderr, "Could not verify receiver address\n");
+    fprintf(stderr, "Could not verify receiver or receiver address\n");
     return 0;
 }

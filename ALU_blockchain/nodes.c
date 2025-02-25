@@ -295,52 +295,104 @@ int load_user(const char *name, int idx)
 
 
 /**
- * get_user - get current session user
- * Return: pointer to to session user else NULL
+ * get_user - get user account
+ * @address: if address is given retrieve user with wallet address
+ * Otherwise, retrieve session user
+ * Return: pointer to user else NULL
  */
-user_t *get_user(void)
+user_t *get_user(const char *address)
 {
     lusers *all_users;
-    user_t *sesh_user, *current_user;
-    FILE *file = fopen(SESSION_USER, "rb");
-    if (!file)
+    user_t *user = NULL, *sesh_user = NULL;
+    
+    if (!address)
     {
-        fprintf(stderr, "Failed to open session user file...");
-        return NULL;
-    }
+        FILE *file = fopen(SESSION_USER, "rb");
+        if (!file)
+        {
+            fprintf(stderr, "Failed to open session user file...");
+            return NULL;
+        }
 
-    sesh_user = (user_t *)malloc(sizeof(user_t));
-    if (!sesh_user)
-    {
-        perror("Failed to allocate memory for session user");
+        sesh_user = (user_t *)malloc(sizeof(user_t));
+        if (!sesh_user)
+        {
+            perror("Failed to allocate memory for session user");
+            fclose(file);
+            return NULL;
+        }
+
+        sesh_user->wallet = NULL;
+        sesh_user->next = NULL;
+
+        if (fread(&sesh_user->role, sizeof(sesh_user->role), 1, file) != 1 ||
+            fread(&sesh_user->index, sizeof(sesh_user->index), 1, file) != 1 ||
+            fread(sesh_user->name, sizeof(sesh_user->name), 1, file) != 1)
+        {
+            fprintf(stderr, "Failed to read session user data\n");
+            fclose(file);
+            free(sesh_user);
+            return NULL;
+        }
         fclose(file);
-        return NULL;
     }
 
-    sesh_user->wallet = NULL;
-    sesh_user->next = NULL;
-
-    fread(&sesh_user->role, sizeof(sesh_user->role), 1, file);
-    fread(&sesh_user->index, sizeof(sesh_user->index), 1, file);
-    fread(sesh_user->name, sizeof(sesh_user->name), 1, file);
-    fclose(file);
+    
 
     all_users = deserialize_users();
-    current_user = all_users->head;
-    while (current_user)
+    if (!all_users)
     {
-        if (strcmp(current_user->name, sesh_user->name) == 0 && current_user->index == sesh_user->index)
+        fprintf(stderr, "Failed to deserialize users\n");
+        free(sesh_user);
+        return NULL;
+    }
+    user = all_users->head;
+    while (user)
+    {
+        if (address)
         {
-            free(sesh_user);
-            free_users(all_users);
-            return current_user;
+            if (user->wallet && memcmp(user->wallet->address, address, ADDRESS_SIZE) == 0)
+            {
+                free_users(all_users);
+                return user;
+            }
         }
-        current_user = current_user->next;
+        else
+        {
+            if (sesh_user && strcmp(user->name, sesh_user->name) == 0 && user->index == sesh_user->index)
+            {
+                free(sesh_user);
+                free_users(all_users);
+                return user;
+            }
+        }
+        user = user->next;
     }
     fprintf(stderr, "Could not find user\n");
     free(sesh_user);
     free_users(all_users);
-    return (current_user);
+    return user;
+}
+
+
+/**
+ * free_user - frees user struture from memory
+ * @user: pointer to user to free
+ */
+void free_user(user_t *user)
+{
+    if (user)
+    {
+        if (user->wallet)
+        {
+            if (user->wallet->transactions)
+            {
+                free_transactions(user->wallet->transactions);
+            }
+            free(user->wallet);
+        }
+        free(user);
+    }
 }
 
 /**
@@ -355,21 +407,7 @@ void free_users(lusers *users)
     while (curr)
     {
         user_t *next = curr->next;
-        if (curr->wallet)
-        {
-            if (curr->wallet->transactions)
-            {
-                Transaction *tx = curr->wallet->transactions->head;
-                while (tx)
-                {
-                    Transaction *nxt = tx->next;
-                    free(tx);
-                    tx = nxt;
-                }
-            }
-            free(curr->wallet);
-        }
-        free(curr);
+        free_user(curr);
         curr = next;
     }
     free(users);
