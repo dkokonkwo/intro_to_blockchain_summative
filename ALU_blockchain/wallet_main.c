@@ -7,5 +7,6 @@
  */
 int main(void)
 {
-    
+    view_balance();
+    return 0;
 }

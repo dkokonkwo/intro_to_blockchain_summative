@@ -369,7 +369,8 @@ user_t *get_user(const char *address)
         user = user->next;
     }
     fprintf(stderr, "Could not find user\n");
-    free(sesh_user);
+    if (sesh_user)
+        free(sesh_user);
     free_users(all_users);
     return user;
 }

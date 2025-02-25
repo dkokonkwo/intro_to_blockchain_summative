@@ -51,7 +51,7 @@ int create_wallet(user_t *user)
  */
 void view_balance(void)
 {
-    user_t *user = get_user();
+    user_t *user = get_user(NULL);
     if (!user)
     {
         fprintf(stderr, "User invalid\n");
