@@ -94,9 +94,15 @@ int add_transaction(const char *sender, const char *receiver, int amount)
 {
     utxo_t *unspent;
     Transaction *new_trans;
-    if (!sender || !receiver || !amount)
+    if (!sender || !receiver || amount <= 0)
     {
         fprintf(stderr, "Wrong details\n");
+        return 0;
+    }
+
+    if (!verify_transaction(sender, receiver))
+    {
+        fprintf(stderr, "Could not verify transaction\n");
         return 0;
     }
 
@@ -142,7 +148,6 @@ int add_transaction(const char *sender, const char *receiver, int amount)
     }
 
     printf("Transaction saved!\n");
-    free(new_trans);
     free(unspent);
     return 1;
 }
@@ -175,7 +180,6 @@ void free_transactions(utxo_t *transactions)
 int verify_transaction(const char *sender, const char *receiver)
 {
     user_t *curr, *recv;
-    lusers *all_users;
     if (!sender || !receiver)
     {
         fprintf(stderr, "Wrong details\n");
@@ -183,34 +187,35 @@ int verify_transaction(const char *sender, const char *receiver)
     }
     // check to see if sender's address matches current logged in user
     curr = get_user(NULL);
-    if (!curr || !curr->wallet)
+    if (!curr)
     {
-        fprintf(stderr, "Sender has no wallet\n");
+        fprintf(stderr, "Sender details not valid\n");
         return 0;
     }
-    if (strcmp(curr->wallet->address, sender) !=0)
+    if (!curr->wallet)
+    {
+        fprintf(stderr, "Sender has no wallet\n");
+        free(curr);
+        return 0;
+    }
+    if (memcmp(curr->wallet->address, sender, ADDRESS_SIZE) !=0)
     {
         fprintf(stderr, "Unverified sender\n");
         return 0;
     }
-    all_users = deserialize_users();
-    if (!all_users || !all_users->length)
+    free_user(curr);
+    recv = get_user(receiver);
+    if (!recv)
     {
-        fprintf(stderr, "Problem verifying receiver address\n");
+        fprintf(stderr, "Receiver details not valid\n");
         return 0;
     }
-    for (recv = all_users->head; recv; recv = recv->next)
+    if (!recv->wallet)
     {
-        if (recv->wallet)
-        {
-            if (strcmp(recv->wallet->address, receiver) == 0)
-            {
-                printf("Transaction verified\n");
-                return 1;
-            }
-        }
+        fprintf(stderr, "Recevier has no wallet\n");
+        free(recv);
+        return 0;
     }
-
-    fprintf(stderr, "Could not verify receiver or receiver address\n");
-    return 0;
+    free_user(recv);
+    return 1;
 }

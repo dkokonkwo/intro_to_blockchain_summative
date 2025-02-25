@@ -170,6 +170,7 @@ typedef struct {
 } Token;
 
 /* TRANSACTION FUNCTIONS */
+
 int serialize_utxo(utxo_t *unspent);
 utxo_t *deserialize_utxo(void);
 int add_transaction(const char *sender, const char *receiver, int amount);
@@ -177,12 +178,14 @@ void free_transactions(utxo_t *transactions);
 int verify_transaction(const char *sender, const char *receiver);
 
 /* WALLET FUNCTIONS */
+
 int create_wallet(user_t *user); //compute user address(hash) and print it. Add wallet to user structure
 void get_address(user_t *user, unsigned char *hash);
 int delete_wallet(user_t *user); //may or may not be a function
 void view_balance(void); //print out balance in user wallet
 
 /* USER FUNCTIONS */
+
 int load_user(const char *name, int idx);
 int create_user(const char *name, int role);
 int serialize_users(lusers *users);
@@ -192,10 +195,12 @@ void free_users(lusers *users);
 void free_user(user_t *user);
 
 /* BLOCK FUNCTIONS */
+
 Block *create_block(int index, utxo_t *transactions, const unsigned char *previous_hash, int difficulty);
 void add_block(Blockchain *blockchain, Block *block);
 
 /* BLOCK MINING FUNCTIONS */
+
 void mine_block(Block *block, int difficulty);
 void calculate_hash(Block *block, unsigned int nonce, unsigned char *hash);
 int is_valid_hash(unsigned char *hash, int difficulty);
@@ -204,8 +209,9 @@ int finalize_mining(Block *block);
 utxo_t *tx_for_mining(utxo_t *total_unpsent);
 
 /* BLOCKCHAIN FUNCTIONS */
+
 Blockchain *deserialize_blockchain(void);
-int serialize_blockchain(Blockchain *blockchain); //backup_blockchain?
+int serialize_blockchain(Blockchain *blockchain); // backup_blockchain?
 Blockchain *init_blockchain(void);
 int validate_chain(Blockchain *blockchain);
 void print_blockchain(Blockchain *blockchain);
