@@ -10,7 +10,7 @@ Question 1: `Creating a Blockchain-based Job Directory Application in C`
    
    **Example Command**:
    ```bash
-   gcc -o main blockchain_functions.c main.c -lssl -lcrypto
+   gcc -o job_directory.out blockchain_functions.c main.c -lssl -lcrypto
    ```
 3. **Execution**: Run the resulting executable by typing the following command in your Linux terminal:
    ```bash
