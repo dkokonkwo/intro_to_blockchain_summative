@@ -1,0 +1,82 @@
+dokonkwo19@Ashley-Cole:~/intro_to_blockchain_summative/job_directory$ gcc -o main blockchain_functions.c main.c -lssl -lcrypto
+dokonkwo19@Ashley-Cole:~/intro_to_blockchain_summative/job_directory$ ./main
+
+=== Job Directory (Blockchain) ===
+1. Add a Job
+2. Search for a Job by Keyword
+3. Check Blockchain Integrity
+4. Tamper with a Job posting information
+5. List all jobs
+6. Exit
+Enter your choice: 1
+Enter job title: Solidity Developer
+Enter company name: Johnson Inc.
+Enter job location: Truro, NS
+Enter job description: Blockchain developer with three years experience in Solidity
+Job successfully added!
+
+=== Job Directory (Blockchain) ===
+1. Add a Job
+2. Search for a Job by Keyword
+3. Check Blockchain Integrity
+4. Tamper with a Job posting information
+5. List all jobs
+6. Exit
+Enter your choice: 2
+Enter keyword to search for: Engineer
+Found Job:
+Job ID: 1
+Title: Software Engineer
+Company: TechCorp
+Location: New York, NY
+
+Found Job:
+Job ID: 5
+Title: DevOps Engineer
+Company: DevOps Ltd
+Location: Boston, MA
+
+Found Job:
+Job ID: 11
+Title: Embedded Systems Engineer
+Company: EmbeddedTech
+Location: Houston, TX
+
+Found Job:
+Job ID: 15
+Title: Network Engineer
+Company: NetSecure
+Location: Dallas, TX
+
+
+=== Job Directory (Blockchain) ===
+1. Add a Job
+2. Search for a Job by Keyword
+3. Check Blockchain Integrity
+4. Tamper with a Job posting information
+5. List all jobs
+6. Exit
+Enter your choice: 3
+Blockchain integrity verified. No tampering detected.
+
+=== Job Directory (Blockchain) ===
+1. Add a Job
+2. Search for a Job by Keyword
+3. Check Blockchain Integrity
+4. Tamper with a Job posting information
+5. List all jobs
+6. Exit
+Enter your choice: 4
+Enter block index to tamper with: 13
+Block 13 has been tampered with.
+
+=== Job Directory (Blockchain) ===
+1. Add a Job
+2. Search for a Job by Keyword
+3. Check Blockchain Integrity
+4. Tamper with a Job posting information
+5. List all jobs
+6. Exit
+Enter your choice: 3
+Blockchain has been tampered with!
+

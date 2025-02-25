@@ -21,14 +21,15 @@ int calculate_hash(block_t *block, unsigned char *hash)
         return 0;
     }
 
-    /* Adding block elements to hash calculation */
+    /* Adding block metadata */
     if (EVP_DigestUpdate(ctx, &block->index, sizeof(block->index)) != 1 ||
         EVP_DigestUpdate(ctx, block->timestamp, strlen(block->timestamp)) != 1 ||
         EVP_DigestUpdate(ctx, block->prev_hash, SHA256_DIGEST_LENGTH) != 1 ||
         EVP_DigestUpdate(ctx, block->title, strlen(block->title)) != 1 ||
         EVP_DigestUpdate(ctx, block->company, strlen(block->company)) != 1 ||
         EVP_DigestUpdate(ctx, block->location, strlen(block->location)) != 1 ||
-        EVP_DigestUpdate(ctx, block->desc, strlen(block->desc)) != 1) {
+        EVP_DigestUpdate(ctx, block->desc, strlen(block->desc)) != 1)
+    {
         fprintf(stderr, "Failed to update hash\n");
         EVP_MD_CTX_free(ctx);
         return 0;
@@ -149,7 +150,7 @@ void print_blockchain(Blockchain *blockchain)
         return;
     block_t *current = blockchain->head;
     while (current) {
-        printf("Index: %d\nTimestamp: %s\nTitle: %s\nCompany: %s\nLocation: %s\nDescription: %s\n\n",
+        printf("Job ID: %d\nTimestamp: %sTitle: %s\nCompany: %s\nLocation: %s\nDescription: %s\n\n",
                current->index, current->timestamp, current->title,
                current->company, current->location, current->desc);
         current = current->next;
@@ -185,7 +186,7 @@ void search_job(Blockchain *blockchain, char *keyword)
     while (current)
     {
         if (strstr(current->title, keyword) || strstr(current->company, keyword) || strstr(current->location, keyword)) {
-            printf("Found Job:\nIndex: %d\nTitle: %s\nCompany: %s\nLocation: %s\n\n",
+            printf("Found Job:\nJob ID: %d\nTitle: %s\nCompany: %s\nLocation: %s\n\n",
                    current->index, current->title, current->company, current->location);
         }
         current = current->next;
@@ -197,8 +198,9 @@ void search_job(Blockchain *blockchain, char *keyword)
  * @block: pointer to block to tamper with
  */
 void tamper_block(block_t *block) {
-    if (block) {
-        strcpy(block->desc, "This job posting has been tampered with!");
+    if (block)
+    {
+        strcpy(block->title, "This job posting has been tampered with!");
         if (!calculate_hash(block, block->curr_hash))
             fprintf(stderr, "Could not recalculate tamper block hash\n");
     }
@@ -220,7 +222,8 @@ int validate_blockchain(Blockchain *blockchain)
     while (current)
     {
         calculate_hash(current, calculated_hash);
-        if (memcmp(current->curr_hash, calculated_hash, SHA256_DIGEST_LENGTH) != 0 || memcmp(current->prev_hash, tmp_hash, SHA256_DIGEST_LENGTH) != 0)
+        if (memcmp(current->curr_hash, calculated_hash, SHA256_DIGEST_LENGTH) != 0 ||
+            memcmp(current->prev_hash, tmp_hash, SHA256_DIGEST_LENGTH) != 0)
         {
             return 0;
         }    

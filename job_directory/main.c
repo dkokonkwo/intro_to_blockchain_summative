@@ -21,8 +21,8 @@ int main(void)
         printf("1. Add a Job\n");
         printf("2. Search for a Job by Keyword\n");
         printf("3. Check Blockchain Integrity\n");
-        printf("4. Tamper with a Block\n");
-        printf("5. Print Blockchain\n");
+        printf("4. Tamper with a Job posting information\n");
+        printf("5. List all jobs\n");
         printf("6. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
@@ -37,10 +37,10 @@ int main(void)
             search_job_by_keyword(blockchain);
             break;
         case 3:
-            if (validate_blockchain(blockchain))
-                printf("Blockchain integrity verified. No tampering detected.\n");
-            else
+            if (!validate_blockchain(blockchain))
                 printf("Blockchain has been tampered with!\n");
+            else
+                printf("Blockchain integrity verified. No tampering detected.\n");
             break;
         case 4:
             tamper_with_block(blockchain);
