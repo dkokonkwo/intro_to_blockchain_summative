@@ -24,9 +24,16 @@ int create_user(const char *name, int role)
     lusers *users = deserialize_users();
     if (!users)
     {
-        fprintf(stderr, "Could not get user from file\n");
-        free(new_user);
-        return 0;
+        printf("Could not get user from file...Creating new list\n");
+        users = (lusers *)malloc(sizeof(lusers));
+        if (!users)
+        {
+            fprintf(stderr, "Could not allocate memory for new users list\n");
+            return 0;
+        }
+        users->head = NULL;
+        users->tail = NULL;
+        users->length = 0;
     }
 
     new_user->role = (Role)role;
@@ -48,7 +55,13 @@ int create_user(const char *name, int role)
     }
 
     users->length++;
-    serialize_users(users);
+    if (!serialize_users(users))
+    {
+        fprintf(stderr, "Could not serialize users with new user\n");
+        free_users(users);
+        return 0;
+    }
+    printf("User created\n");
     int result = load_user(name, new_user->index);
     return result;
 }
@@ -89,28 +102,6 @@ int serialize_users(lusers *users)
         {
             fwrite(current->wallet->address, sizeof(current->wallet->address), 1, file);
             fwrite(&current->wallet->balance, sizeof(current->wallet->balance), 1, file);
-            
-
-            if (current->wallet->transactions)
-            {
-                fwrite(&current->wallet->nb_trans, sizeof(current->wallet->nb_trans), 1, file);
-
-                Transaction *trans = current->wallet->transactions->head;
-                while (trans)
-                {
-                    fwrite(&trans->index, sizeof(trans->index), 1, file);
-                    fwrite(trans->sender, sizeof(trans->sender), 1, file);
-                    fwrite(trans->receiver, sizeof(trans->receiver), 1, file);
-                    fwrite(&trans->amount, sizeof(trans->amount), 1, file);
-                    fwrite(&trans->status, sizeof(trans->status), 1, file);
-                    trans = trans->next;
-                }
-            }
-            else
-            {
-                int zero_trans = 0;
-                fwrite(&zero_trans, sizeof(zero_trans), 1, file);
-            }
         }
 
         current = current->next;
@@ -130,7 +121,7 @@ lusers *deserialize_users(void)
     FILE *file = fopen(USERS_DATABASE, "rb");
     if (!file)
     {
-        fprintf(stderr, "Failed to open users file");
+        fprintf(stderr, "Failed to open users file\n");
         return NULL;
     }
 
@@ -180,51 +171,6 @@ lusers *deserialize_users(void)
             }
             fread(user->wallet->address, sizeof(user->wallet->address), 1, file);
             fread(&user->wallet->balance, sizeof(user->wallet->balance), 1, file);
-
-            int nb_trans;
-            fread(&nb_trans, sizeof(nb_trans), 1, file);
-            user->wallet->nb_trans = nb_trans;
-
-            if (nb_trans > 0)
-            {
-                user->wallet->transactions = (utxo_t *)malloc(sizeof(utxo_t));
-                if (!user->wallet->transactions)
-                {
-                    perror("Failed to allocate memory for transactions");
-                    free(user->wallet);
-                    free(user);
-                    break;
-                }
-
-                user->wallet->transactions->head = NULL;
-                user->wallet->transactions->nb_trans = nb_trans;
-
-                Transaction *prevTrans = NULL;
-                for (int j = 0; j < nb_trans; j++)
-                {
-                    Transaction *trans = (Transaction *)malloc(sizeof(Transaction));
-                    if (!trans)
-                    {
-                        perror("Failed to allocate memory for transaction");
-                        break;
-                    }
-
-                    fread(&trans->index, sizeof(trans->index), 1, file);
-                    fread(trans->sender, sizeof(trans->sender), 1, file);
-                    fread(trans->receiver, sizeof(trans->receiver), 1, file);
-                    fread(&trans->amount, sizeof(trans->amount), 1, file);
-                    fread(&trans->status, sizeof(trans->status), 1, file);
-                    trans->next = NULL;
-
-                    if (prevTrans == NULL)
-                        user->wallet->transactions->head = trans;
-                    else
-                        prevTrans->next = trans;
-                    prevTrans = trans;
-                }
-            }
-            else
-                user->wallet->transactions = NULL;
         }
         else
             user->wallet = NULL;
@@ -263,7 +209,7 @@ int load_user(const char *name, int idx)
     lusers *all_users = deserialize_users();
     if (!all_users)
     {
-        fprintf(stderr, "Could not get all users\n");
+        fprintf(stderr, "Could not get all users for loading\n");
         return 0;
     }
     user_t *curr = all_users->head;
@@ -300,7 +246,7 @@ int load_user(const char *name, int idx)
  * Otherwise, retrieve session user
  * Return: pointer to user else NULL
  */
-user_t *get_user(const char *address)
+user_t *get_user(unsigned char *address)
 {
     lusers *all_users;
     user_t *user = NULL, *sesh_user = NULL;
@@ -317,7 +263,7 @@ user_t *get_user(const char *address)
         sesh_user = (user_t *)malloc(sizeof(user_t));
         if (!sesh_user)
         {
-            perror("Failed to allocate memory for session user");
+            fprintf(stderr, "Failed to allocate memory for session user\n");
             fclose(file);
             return NULL;
         }
@@ -337,8 +283,6 @@ user_t *get_user(const char *address)
         fclose(file);
     }
 
-    
-
     all_users = deserialize_users();
     if (!all_users)
     {
@@ -353,7 +297,6 @@ user_t *get_user(const char *address)
         {
             if (user->wallet && memcmp(user->wallet->address, address, ADDRESS_SIZE) == 0)
             {
-                free_users(all_users);
                 return user;
             }
         }
@@ -362,19 +305,39 @@ user_t *get_user(const char *address)
             if (sesh_user && strcmp(user->name, sesh_user->name) == 0 && user->index == sesh_user->index)
             {
                 free(sesh_user);
-                free_users(all_users);
                 return user;
             }
         }
         user = user->next;
     }
-    fprintf(stderr, "Could not find user\n");
+    fprintf(stderr, "Could not find user with address:");
+    for (int i = 0; i < ADDRESS_SIZE; i++)
+    {
+        printf("%02x", address[i]);
+    }
+    printf("\n\n");
+
     if (sesh_user)
         free(sesh_user);
     free_users(all_users);
     return user;
 }
 
+/**
+ * print_current_user - prints current user info
+ */
+void print_current_user(void)
+{
+    user_t *user = get_user(NULL);
+    if (user)
+    {
+        printf("Name: %s\nUser ID: %d\n", user->name, user->index);
+        if (user->wallet)
+            print_wallet(user->wallet);
+        else
+            printf("No wallet\n");
+    }
+}
 
 /**
  * free_user - frees user struture from memory
@@ -385,13 +348,7 @@ void free_user(user_t *user)
     if (user)
     {
         if (user->wallet)
-        {
-            if (user->wallet->transactions)
-            {
-                free_transactions(user->wallet->transactions);
-            }
             free(user->wallet);
-        }
         free(user);
     }
 }

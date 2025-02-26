@@ -90,7 +90,7 @@ utxo_t *deserialize_utxo(void)
  * @amount: amount of transaction
  * Return: 1 on success or 0 on failure
  */
-int add_transaction(const char *sender, const char *receiver, int amount)
+int add_transaction(unsigned char *sender, unsigned char *receiver, int amount)
 {
     utxo_t *unspent;
     Transaction *new_trans;
@@ -105,12 +105,21 @@ int add_transaction(const char *sender, const char *receiver, int amount)
         fprintf(stderr, "Could not verify transaction\n");
         return 0;
     }
+    printf("Details verified\n");
 
     unspent = deserialize_utxo();
     if (!unspent)
     {
         fprintf(stderr, "Error deserializing unspent transactions\n");
-        return 0;
+        printf("Creating new unspent file\n");
+        unspent = (utxo_t *)malloc(sizeof(utxo_t));
+        if (!unspent)
+        {
+            fprintf(stderr, "Could not allocate mmemory for new unspent\n");
+            return 0;
+        }
+        unspent->head = unspent->tail = NULL;
+        unspent->nb_trans = 0;
     }
 
     new_trans = (Transaction *)malloc(sizeof(Transaction));
@@ -123,9 +132,8 @@ int add_transaction(const char *sender, const char *receiver, int amount)
     new_trans->index = unspent->nb_trans;
     unspent->nb_trans++;
 
-    strncpy(new_trans->sender, sender, DATASIZE_MAX - 1);
-    new_trans->sender[DATASIZE_MAX - 1] = '\0';
-    strncpy(new_trans->receiver, receiver, DATASIZE_MAX - 1);
+    memcpy(new_trans->sender, sender, ADDRESS_SIZE);
+    memcpy(new_trans->receiver, receiver, ADDRESS_SIZE);
     new_trans->receiver[DATASIZE_MAX - 1] = '\0';
 
     new_trans->amount = amount;
@@ -177,7 +185,7 @@ void free_transactions(utxo_t *transactions)
  * @receiver: receiver's address to verify
  * Return: 1 if addresses are verified else 0 on failure
  */
-int verify_transaction(const char *sender, const char *receiver)
+int verify_transaction(unsigned char *sender, unsigned char *receiver)
 {
     user_t *curr, *recv;
     if (!sender || !receiver)

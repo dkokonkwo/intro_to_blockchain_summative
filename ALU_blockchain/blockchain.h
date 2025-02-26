@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <arpa/inet.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
@@ -14,9 +15,11 @@
 #define UTXO_DATABASE "transaction.dat"
 #define USERS_DATABASE "users.dat"
 #define SESSION_USER "current_user.dat"
+#define ALU_ACCOUNT_FILE "alu_account.dat"
 #define TRANSACTION_FEE 1
 #define TRANSACTION_VOLUME 5 /* Number of transaction to be mined in a block */
-#define ADDRESS_SIZE SHA256_DIGEST_LENGTH / 2
+#define ADDRESS_SIZE (SHA256_DIGEST_LENGTH / 2)
+#define GIFT_TOKENS 2000000
 
 #define INITIAL_DIFFICULTY 1  /* Starting difficulty level */
 
@@ -34,12 +37,6 @@ typedef enum
     FAILED,
 } Status;
 
-const char* status_str[] = {
-    "INITIATED",
-    "SUCCESS",
-    "FAILED",
-};
-
 /**
  * struct Transaction_s - transaction structure
  * @index: transaction index
@@ -51,8 +48,8 @@ const char* status_str[] = {
  */
 typedef struct Transaction_s {
     int index;
-    char sender[DATASIZE_MAX];
-    char receiver[DATASIZE_MAX];
+    unsigned char sender[ADDRESS_SIZE];
+    unsigned char receiver[ADDRESS_SIZE];
     int amount;
     Status status;
     struct Transaction_s *next;
@@ -114,8 +111,6 @@ typedef struct Blockchain {
 typedef struct Wallet {
     unsigned char address[SHA256_DIGEST_LENGTH];
     int balance;
-    utxo_t *transactions;
-    int nb_trans;
 } Wallet;
 
 /**
@@ -147,17 +142,6 @@ typedef struct lusers {
 } lusers;
 
 /**
- * alu_account - school wallet
- * @name: school name
- * @wallet: pointer to school wallet
- */
-typedef struct alu_account_s
-{
-    char name[DATASIZE_MAX];
-    Wallet *wallet;
-} alu_account_s;
-
-/**
  * Token: university token structure
  * @token_name: token name
  * @total_supply: total supply of token
@@ -169,28 +153,42 @@ typedef struct {
     unsigned int circulating_supply;
 } Token;
 
+/**
+ * alu_account - school wallet
+ * @name: school name
+ * @wallet: pointer to school wallet
+ */
+typedef struct alu_account_s
+{
+    char name[DATASIZE_MAX];
+    Wallet *wallet;
+    Token *token;
+} alu_account;
+
 /* TRANSACTION FUNCTIONS */
 
 int serialize_utxo(utxo_t *unspent);
 utxo_t *deserialize_utxo(void);
-int add_transaction(const char *sender, const char *receiver, int amount);
+int add_transaction(unsigned char *sender, unsigned char *receiver, int amount);
 void free_transactions(utxo_t *transactions);
-int verify_transaction(const char *sender, const char *receiver);
+int verify_transaction(unsigned char *sender, unsigned char *receiver);
 
 /* WALLET FUNCTIONS */
 
 int create_wallet(user_t *user); //compute user address(hash) and print it. Add wallet to user structure
-void get_address(user_t *user, unsigned char *hash);
 int delete_wallet(user_t *user); //may or may not be a function
 void view_balance(void); //print out balance in user wallet
+void get_address(const char *name, unsigned char *address);
+void print_wallet(Wallet *wallet);
 
 /* USER FUNCTIONS */
 
+void print_current_user(void);
 int load_user(const char *name, int idx);
 int create_user(const char *name, int role);
 int serialize_users(lusers *users);
 lusers *deserialize_users(void);
-user_t *get_user(const char *address);
+user_t *get_user(unsigned char *address);
 void free_users(lusers *users);
 void free_user(user_t *user);
 
@@ -202,7 +200,7 @@ void add_block(Blockchain *blockchain, Block *block);
 /* BLOCK MINING FUNCTIONS */
 
 void mine_block(Block *block, int difficulty);
-void calculate_hash(Block *block, unsigned int nonce, unsigned char *hash);
+void calculate_hash(Block *block, unsigned char *hash);
 int is_valid_hash(unsigned char *hash, int difficulty);
 void hash_to_hex(unsigned char *hash, char *output);
 int finalize_mining(Block *block);
@@ -216,7 +214,18 @@ Blockchain *init_blockchain(void);
 int validate_chain(Blockchain *blockchain);
 void print_blockchain(Blockchain *blockchain);
 void free_blockchain(Blockchain *blockchain);
-utxo_t *create_genesis_transaction(const char *sender, const char *receiver, int amount); //might not be neccessary
-int adjustDifficulty(uint64_t prevTime, uint64_t currentTime, int currentDifficulty);
+utxo_t *create_genesis_transaction(unsigned char *sender, unsigned char *receiver, int amount);
+int adjust_difficulty(uint64_t prevTime, uint64_t currentTime, int currentDifficulty);
+
+/* ALU ACCOUNT FUNCTIONS */
+
+void print_alu_account(alu_account *account);
+void free_alu_account(alu_account *account);
+alu_account *deserialize_alu_account(void);
+int serialize_alu_account(alu_account *account);
+alu_account *create_alu_account(void);
+alu_account *load_alu_account(void);
+void transfer_tokens(alu_account *account, user_t *user);
+void setup_blockchain(void);
 
 #endif

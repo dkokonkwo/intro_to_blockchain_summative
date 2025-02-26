@@ -24,8 +24,7 @@ int main(void)
 
     /* Removing newlines */
     name[strcspn(name, "\n")] = '\0';
-
-    if (!create_user(name, role))
+    if (!create_user(name, role - 1))
     {
         fprintf(stderr, "Could not create new user\n");
         exit(EXIT_FAILURE);

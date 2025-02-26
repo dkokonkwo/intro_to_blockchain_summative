@@ -35,7 +35,7 @@ int is_valid_hash(unsigned char *hash, int difficulty)
  * @hash: pointer to address to store hash
  * Return: Nothing
  */
-void calculate_hash(Block *block, unsigned int nonce, unsigned char *hash)
+void calculate_hash(Block *block, unsigned char *hash)
 {
     Transaction *current_trans;
 
@@ -57,7 +57,7 @@ void calculate_hash(Block *block, unsigned int nonce, unsigned char *hash)
     if (EVP_DigestUpdate(ctx, &index_be, sizeof(index_be)) != 1 ||
         EVP_DigestUpdate(ctx, block->timestamp, sizeof(block->timestamp)) != 1 ||
         EVP_DigestUpdate(ctx, block->previous_hash, SHA256_DIGEST_LENGTH) != 1 ||
-        EVP_DigestUpdate(ctx, &nonce, sizeof(nonce)) != 1)
+        EVP_DigestUpdate(ctx, &block->nonce, sizeof(block->nonce)) != 1)
     {
         fprintf(stderr, "Failed to update hash with block metadata\n");
         EVP_MD_CTX_free(ctx);
@@ -69,15 +69,14 @@ void calculate_hash(Block *block, unsigned int nonce, unsigned char *hash)
         /* adding block's transactions to hash*/
         current_trans = block->transactions->head;
         while (current_trans) {
-            current_trans->status = SUCCESS;
-            if (EVP_DigestUpdate(ctx, current_trans->sender, strlen(current_trans->sender)) != 1 ||
-                EVP_DigestUpdate(ctx, current_trans->receiver, strlen(current_trans->receiver)) != 1 ||
+            if (EVP_DigestUpdate(ctx, current_trans->sender, ADDRESS_SIZE) != 1 ||
+                EVP_DigestUpdate(ctx, current_trans->receiver, ADDRESS_SIZE) != 1 ||
                 EVP_DigestUpdate(ctx, &current_trans->amount, sizeof(current_trans->amount)) != 1 ||
                 EVP_DigestUpdate(ctx, &current_trans->status, sizeof(current_trans->status)) != 1)
             {
                 fprintf(stderr, "Failed to update hash with transaction data\n");
                 EVP_MD_CTX_free(ctx);
-                return -1;
+                exit(EXIT_FAILURE);
             }
             current_trans = current_trans->next;
         }
@@ -108,7 +107,7 @@ void mine_block(Block *block, int difficulty)
 
     do {
         block->nonce = nonce;
-        calculateHash(block, nonce, hash);
+        calculate_hash(block, hash);
         nonce++;
     } while (!is_valid_hash(hash, difficulty));
 
@@ -131,12 +130,11 @@ int finalize_mining(Block *block)
         return 0;
     }
     user_t *miner = get_user(NULL);
-    if (!miner)
+    if (!miner || !miner->wallet)
     {
         fprintf(stderr, "Could next get miner details\n");
         return 0;
     }
-    lusers *all_users = deserialize_users();
     Transaction *trans = block->transactions->head;
     while (trans)
     {
@@ -156,6 +154,7 @@ int finalize_mining(Block *block)
         sender->wallet->balance -= trans->amount + TRANSACTION_FEE;
         receiver->wallet->balance += trans->amount;
         miner->wallet->balance += TRANSACTION_FEE;
+        trans = trans->next;
     }
     return 1;
 }

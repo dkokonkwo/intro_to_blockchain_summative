@@ -16,7 +16,7 @@ int main(void)
     }
 
     printf("Enter your userID: ");
-    if (scanf("%d", &userID) != 1)
+    if (scanf("%d%*c", &userID) != 1)
     {
         printf("Error: invalid input.\n");
         exit(EXIT_FAILURE);

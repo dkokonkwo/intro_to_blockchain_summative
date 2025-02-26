@@ -49,7 +49,7 @@ int serialize_blockchain(Blockchain *blockchain)
     }
 
     fclose(file);
-    freeBlockchain(blockchain);
+    free_blockchain(blockchain);
     return 1;
 }
 

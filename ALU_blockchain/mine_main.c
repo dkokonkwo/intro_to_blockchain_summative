@@ -72,11 +72,11 @@ int main(void)
     }
 
     endTime = (uint64_t)time(NULL);
-    addBlock(blockchain, newBlock);
+    add_block(blockchain, newBlock);
     printf("Time taken to mine block: %lu seconds\n", (endTime - startTime));
     printf("\n\n");
 
-    blockchain->difficulty = adjustDifficulty(startTime, endTime, blockchain->difficulty);
+    blockchain->difficulty = adjust_difficulty(startTime, endTime, blockchain->difficulty);
     printf("New Difficulty Level: %d\n", blockchain->difficulty);
 
     printf("\n------VERIFYING BLOCKCHAIN INTERGRITY-------\n");

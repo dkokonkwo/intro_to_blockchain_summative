@@ -1,12 +1,19 @@
 #include "blockchain.h"
 
+const char* status_strings[] = {
+    "INITIATED",
+    "SUCCESS",
+    "FAILED",
+};
+
+
 /**
  * create_genesis_transaction: create list of transactions for a new block main use for genesis block
  * @sender: sender details
  * @receiver: receiver details
  * @amount: transaction amount
  */
-utxo_t *create_genesis_transaction(const char *sender, const char *receiver, int amount)
+utxo_t *create_genesis_transaction(unsigned char *sender, unsigned char *receiver, int amount)
 {
     utxo_t *new_list;
     Transaction *new_trans = (Transaction *)malloc(sizeof(Transaction));
@@ -15,11 +22,8 @@ utxo_t *create_genesis_transaction(const char *sender, const char *receiver, int
         perror("Could not allocate memory for transaction");
         exit(EXIT_FAILURE);
     }
-    strncpy(new_trans->sender, sender, DATASIZE_MAX - 1);
-    new_trans->sender[DATASIZE_MAX - 1] = '\0';
-    
-    strncpy(new_trans->receiver, receiver, DATASIZE_MAX - 1);
-    new_trans->receiver[DATASIZE_MAX - 1] = '\0';
+    memcpy(new_trans->sender, sender, ADDRESS_SIZE);
+    memcpy(new_trans->receiver, receiver, ADDRESS_SIZE);
 
     new_trans->amount = amount;
 
@@ -105,8 +109,9 @@ Blockchain *init_blockchain(void)
     blockchain->difficulty = INITIAL_DIFFICULTY;
 
     // Create the genesis block
-    utxo_t *genesis_transactions = create_genesis_transaction("Genesis", "Blockchain", 10);
-    Block *genesisBlock = createBlock(0, genesis_transactions, NULL, blockchain->difficulty);
+    unsigned char addr[ADDRESS_SIZE] = {0};
+    utxo_t *genesis_transactions = create_genesis_transaction(addr, addr, 10);
+    Block *genesisBlock = create_block(0, genesis_transactions, NULL, blockchain->difficulty);
 
     blockchain->head = blockchain->tail = genesisBlock;
     blockchain->length = 1;
@@ -150,11 +155,11 @@ void print_blockchain(Blockchain *blockchain)
     Block *current = blockchain->head;
     while (current) {
         printf("Block %d\n", current->index);
-        printf("Timestamp: %lu\n", current->timestamp);
+        printf("Timestamp: %s\n", current->timestamp);
         Transaction *trans = current->transactions->head;
         while (trans)
         {
-            printf("  Transaction %d: %s -> %s, Amount: %d Status: %d\n", trans->index, trans->sender, trans->receiver, trans->amount, status_str[trans->status]);
+            printf("  Transaction %d: %s -> %s, Amount: %d Status: %s\n", trans->index, trans->sender, trans->receiver, trans->amount, status_strings[trans->status]);
             trans = trans->next;
         }
 
