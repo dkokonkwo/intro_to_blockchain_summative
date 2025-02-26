@@ -1,0 +1,2 @@
+Run `sudo make` to test the program
+To clean up, run `sudo make clean`
