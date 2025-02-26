@@ -16,7 +16,7 @@
 #define USERS_DATABASE "users.dat"
 #define SESSION_USER "current_user.dat"
 #define ALU_ACCOUNT_FILE "alu_account.dat"
-#define TRANSACTION_FEE 1
+#define TRANSACTION_FEE 250
 #define TRANSACTION_VOLUME 5 /* Number of transaction to be mined in a block */
 #define ADDRESS_SIZE (SHA256_DIGEST_LENGTH / 2)
 #define GIFT_TOKENS 2000000

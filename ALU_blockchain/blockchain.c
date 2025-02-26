@@ -85,13 +85,14 @@ void add_block(Blockchain *blockchain, Block *block)
     if (!block)
         return;
     if (!blockchain->head)
-        blockchain->head = blockchain->tail = block;
+        blockchain->head = block;
     else
     {
         blockchain->tail->next = block;
-        blockchain->tail = block;
     }
+    blockchain->tail = block;
     blockchain->length++;
+    printf("Block added to blockchain\n");
 }
 
 /**
@@ -113,7 +114,8 @@ Blockchain *init_blockchain(void)
     utxo_t *genesis_transactions = create_genesis_transaction(addr, addr, 10);
     Block *genesisBlock = create_block(0, genesis_transactions, NULL, blockchain->difficulty);
 
-    blockchain->head = blockchain->tail = genesisBlock;
+    blockchain->head = genesisBlock;
+    blockchain->tail = blockchain->head;
     blockchain->length = 1;
 
     return blockchain;
@@ -135,7 +137,7 @@ int validate_chain(Blockchain *blockchain)
 
     while (current)
     {
-        calculate_hash(current, current->nonce, calculatedHash);
+        calculate_hash(current, calculatedHash);
         if (memcmp(current->current_hash, calculatedHash, SHA256_DIGEST_LENGTH) != 0 || memcmp(current->previous_hash, tmpHash, SHA256_DIGEST_LENGTH) != 0) {
             return 0;
         }    
@@ -159,7 +161,18 @@ void print_blockchain(Blockchain *blockchain)
         Transaction *trans = current->transactions->head;
         while (trans)
         {
-            printf("  Transaction %d: %s -> %s, Amount: %d Status: %s\n", trans->index, trans->sender, trans->receiver, trans->amount, status_strings[trans->status]);
+
+            printf("\tTransaction %d: ", trans->index);
+
+            for (int i = 0; i < ADDRESS_SIZE; i++) {
+                printf("%02x", trans->sender[i]);
+            }
+
+            printf(" -> ");
+            for (int i = 0; i < ADDRESS_SIZE; i++) {
+                printf("%02x", trans->receiver[i]);
+            }
+            printf(" Amount: %d\n", trans->amount);
             trans = trans->next;
         }
 

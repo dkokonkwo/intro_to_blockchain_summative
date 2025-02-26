@@ -75,6 +75,7 @@ int main(void)
     add_block(blockchain, newBlock);
     printf("Time taken to mine block: %lu seconds\n", (endTime - startTime));
     printf("\n\n");
+    
 
     blockchain->difficulty = adjust_difficulty(startTime, endTime, blockchain->difficulty);
     printf("New Difficulty Level: %d\n", blockchain->difficulty);
@@ -99,7 +100,7 @@ int main(void)
     }
 
     printf("Serialized new blockchain\n");
-    free_transactions(block_txs);
+
 
     printf("MINING COMPLETE. NEW BLOCK ADDED TO BLOCKCHAIN\n");
     return 0;
